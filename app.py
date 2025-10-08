@@ -2,6 +2,18 @@ import streamlit as st
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
+from supabase import create_client
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+# Initialize Supabase client
+sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 # # Import CLI classes (which internally call service methods)
@@ -17,13 +29,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
 # pastpapers_cli = PastPapersCLI()
 # topic_cat_cli = TopicCategorizationCLI()
 # progress_cli = ProgressCLI()
-from services.student_service import StudentService
+from src.services.student_service import StudentService
 
-from services.student_service import StudentService
-from services.syllabus_service import SyllabusService
-from services.pastpapers_service import PastPapersService
-from services.progress_service import ProgressService
-from services.topic_categorization_service import TopicCategorizationService
+from src.services.student_service import StudentService
+from src.services.syllabus_service import SyllabusService
+from src.services.pastpapers_service import PastPapersService
+from src.services.progress_service import ProgressService
+from src.services.topic_categorization_service import TopicCategorizationService
 from src.services.topic_service import TopicService
 
 
@@ -184,7 +196,7 @@ elif choice == "Topic Categorization":
 # ---------------- Progress Tracking -----------------
 elif choice == "Progress Tracking":
     st.header("Progress Tracking")
-    action = st.radio("Action", ["Mark Progress", "View Progress"])
+    action = st.radio("Action", ["Mark Progress", "View Progress","Update status"])
     
     if action == "Mark Progress":
         sid = st.number_input("Student ID", step=1)
@@ -200,6 +212,65 @@ elif choice == "Progress Tracking":
         if st.button("View Progress"):
             progress = progress_service.get_student_progress(sid)
             st.write(progress)
+    elif action == "Update status":
+        st.subheader("Update Topic Status")
+
+        try:
+        # Input syllabus ID
+            syid = st.number_input("Enter Syllabus ID", step=1, key="syid_input")
+
+        # --- Fetch Pending Topics Button ---
+            if st.button("Fetch Pending Topics", key="fetch_topics_btn"):
+            # Get all pending topics for this syllabus
+                result = sb.table("topics1") \
+                       .select("tpid, title, status") \
+                       .eq("syid", int(syid)) \
+                       .eq("status", "Pending") \
+                       .execute()
+
+                if result.data and len(result.data) > 0:
+                # Save pending topics so they persist after rerun
+                    st.session_state.pending_topics = {
+                    f"{t['tpid']}: {t['title']}": t['tpid'] for t in result.data
+                    }
+                    st.success(f"Found {len(result.data)} pending topic(s).")
+                else:
+                    st.session_state.pending_topics = {}
+                    st.info("🎯 No pending topics found for this syllabus.")
+
+        # --- Show selection if pending topics are loaded ---
+            if "pending_topics" in st.session_state and st.session_state.pending_topics:
+                topic_options = st.session_state.pending_topics
+                selected_topics = st.multiselect(
+                "Select Topic(s) to mark completed",
+                    list(topic_options.keys()),
+                    key="selected_topics_box"
+                )
+
+            # --- Update button ---
+            if st.button("Mark Selected Topics as Completed", key="update_topics_btn"):
+                updated_count = 0
+                for topic_label in selected_topics:
+                    tpid = topic_options[topic_label]
+                    response = sb.table("topics1") \
+                                 .update({"status": "completed"}) \
+                                 .eq("tpid", tpid) \
+                                 .execute()
+                    if response.data:
+                        updated_count += 1
+
+                if updated_count > 0:
+                    st.success(f"✅ {updated_count} topic(s) marked as completed!")
+                    # Remove updated topics from the session list
+                    for topic_label in selected_topics:
+                        st.session_state.pending_topics.pop(topic_label, None)
+                else:
+                    st.warning("⚠️ No topics were updated. Please recheck IDs or statuses.")
+
+        except Exception as e:
+            st.error(f"❌ Error fetching/updating topics: {e}")
+
+        
 # elif choice == "Topic operations":
 #             topic_menu()
             

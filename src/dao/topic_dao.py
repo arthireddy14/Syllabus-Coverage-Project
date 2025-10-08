@@ -21,6 +21,21 @@ if not url or not key:
 sb: Client = create_client(url, key)
 
 
+# class TopicDAO:
+#     def update_topic_status(self, tpid: int, new_status: str):
+#         """
+#         Update the status of a topic manually (e.g., completed or pending).
+#         """
+#         try:
+#             response = sb.table("topics1") \
+#                          .update({"status": new_status}) \
+#                          .eq("tpid", tpid) \
+#                          .execute()
+            
+#             return response.data if response.data else []
+#         except Exception as e:
+#             print("❌ Error updating topic status:", e)
+#             return None
 class TopicDAO:
     def update_topic_status(self, tpid: int, new_status: str):
         """
@@ -32,7 +47,10 @@ class TopicDAO:
                          .eq("tpid", tpid) \
                          .execute()
             
-            return response.data if response.data else []
+            if response.data and len(response.data) > 0:
+                return True   # Update successful
+            else:
+                return False  # No matching tpid found
         except Exception as e:
             print("❌ Error updating topic status:", e)
-            return None
+            return False

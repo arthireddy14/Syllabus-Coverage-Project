@@ -22,7 +22,7 @@ class StudentCLI:
                 print("Student details ",res)
             elif(ch==3):
                 sid=int(input("Enter student id for viewing "))
-                f=input("Enter field to update(name/course) ")
+                f=input("Enter field to update(sname/course) ")
                 v=input()
                 res=self.s1.update_sdetails(sid,{f:v})
                 print("Updated ",res)

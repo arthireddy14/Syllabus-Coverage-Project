@@ -4,11 +4,19 @@
 #     scli.menu()
     
 # src/cli/main.py
+import sys
+import os
+
+# Add the root folder to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from src.cli.student_cli import StudentCLI
 from src.cli.syllabus_cli import SyllabusCLI
 from src.cli.pastpapers_cli import PastPapersCLI
 from src.cli.topic_categorization_cli import TopicCategorizationCLI
 from src.cli.progress_cli import ProgressCLI
+from src.services.topic_service import TopicService
+
 
 class MainCLI:
     def __init__(self):

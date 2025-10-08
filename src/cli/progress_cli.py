@@ -17,9 +17,9 @@ class ProgressCLI:
             if choice == 1:
                 sid = int(input("Enter student id: "))
                 tpid = int(input("Enter topic id: "))
-                completion_per = int(input("Enter completion % (0-100): "))
+                # completion_per = int(input("Enter completion % (0-100): "))
                 lastupdate = input("Enter date (YYYY-MM-DD) [optional]: ") or None
-                res = self.service.mark_topic_progress(sid, tpid, completion_per, lastupdate)
+                res = self.service.mark_topic_progress(sid, tpid, lastupdate)
                 print("Progress updated:", res)
 
             elif choice == 2:

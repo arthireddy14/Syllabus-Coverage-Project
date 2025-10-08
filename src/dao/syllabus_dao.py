@@ -15,14 +15,18 @@
     
 # src/dao/syllabus_dao.py
 import os
-from supabase import create_client
+from supabase import create_client, Client
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  # Load from .env file in project root
 
 url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_KEY")
-sb = create_client(url, key)
+
+if not url or not key:
+    raise ValueError("Supabase URL or Key not found in .env file")
+
+sb: Client = create_client(url, key)
 
 class SyllabusDAO:
     def add_syllabus(self, syid: int, title: str, sid: int):

@@ -1,12 +1,18 @@
 # src/dao/topic_categorization_dao.py
 import os
-from supabase import create_client
+from supabase import create_client, Client
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  # Load from .env file in project root
+
 url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_KEY")
-sb = create_client(url, key)
+
+if not url or not key:
+    raise ValueError("Supabase URL or Key not found in .env file")
+
+sb: Client = create_client(url, key)
+
 
 class TopicCategorizationDAO:
 
@@ -15,7 +21,7 @@ class TopicCategorizationDAO:
         return res.data if res.data else []
 
     def get_past_paper_counts(self, syllabus_id):
-        res = sb.table("pastpapers3").select("tpid").eq("syid", syllabus_id).execute()
+        res = sb.table("pastpapers4").select("tpid").eq("syid", syllabus_id).execute()
         counts = {}
         for row in res.data:
             tpid = row["tpid"]
@@ -24,7 +30,7 @@ class TopicCategorizationDAO:
 
     def get_past_papers_with_files(self, syllabus_id):
         """Get past papers that have uploaded file URLs."""
-        res = sb.table("pastpapers3").select("paper_id, file_url").eq("syid", syllabus_id).execute()
+        res = sb.table("pastpapers4").select("paper_id, file_url").eq("syid", syllabus_id).execute()
         return [r for r in res.data if r.get("file_url")] if res.data else []
 
     def get_category_id(self, cname):
@@ -44,5 +50,5 @@ class TopicCategorizationDAO:
         sb.table("topic_categorization2").upsert(payload, on_conflict="tpid").execute()
 
     def view_categorized_topics(self):
-        res = sb.table("topic_categorization2").select("tpid, appear_count, expected_in_next, cid(category2!inner(cname))").execute()
+        res = sb.table("topic_categorization2").select("tpid, appear_count, expected_in_next, category2!inner(cname)").execute()
         return res.data if res.data else []
